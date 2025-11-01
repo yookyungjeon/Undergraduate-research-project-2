@@ -3,10 +3,18 @@
 
 ## 1. Research Overview
 
-This repository extends the methodology introduced in the previous project, **“Undergraduate-research-project-1”**, which proposed a **Graphical Lasso–guided Multiple Imputation by Chained Equations (Glasso-MICE)** framework.  
-While the earlier study focused solely on **continuous data**, this project generalizes the framework to **mixed-type data (continuous + categorical)** by incorporating the **Mixed Graphical Model (MGM)** into the imputation process.
-Specifically, the new framework—**MICE by mgm**—estimates the conditional dependency structure among variables using MGM and integrates this structure into the iterative MICE procedure. 
-This extension enables a more **realistic and dependency-aware imputation** process for complex datasets with heterogeneous variable types.
+This repository extends the methodology introduced in the previous project,  
+**“Undergraduate-research-project-1”**, which proposed a  
+**Graphical Lasso–guided Multiple Imputation by Chained Equations (Glasso-MICE)** framework.  
+
+While the earlier study focused solely on **continuous data**,  
+this project generalizes the framework to **mixed-type data (continuous + categorical)**  
+by incorporating the **Mixed Graphical Model (MGM)** into the imputation process.
+
+Specifically, the new framework—**MICE by mgm**—estimates the conditional dependency structure among variables  
+using MGM and integrates this structure into the iterative MICE procedure.  
+This extension enables a more **realistic and dependency-aware imputation** process for complex datasets  
+with heterogeneous variable types.
 
 ---
 
