@@ -1,6 +1,6 @@
 # Title: MGM–Guided Multiple Imputation by Chained Equations (MICE) Simulation
 
-# ---- 1) Simulation setup ----
+# 1) Simulation setup -----------------------------------
 library(MASS)
 library(mgm)
 library(mice)
@@ -11,11 +11,9 @@ library(qgraph)
 all_fpr_tpr_data <- data.frame()
 seeds <- 1:10
 
-# ---- 2) Simulation ----
+# 2) Simulation runs ---------------------------------
 for (seednum in seeds) {
-
-  # -- 2.1 Data generation & type specification --
-
+  # 2-1) Data generation and Type Specification-------
   mgmsampler_user <- function (factors, interactions, thresholds, sds, type, level,
                                N, nIter = 250, pbar = TRUE, divWarning = 10^3, returnChains = FALSE) {
 
@@ -131,7 +129,6 @@ for (seednum in seeds) {
     for (case in 1:N) {
       sampling_seq <- matrix(NA, nrow = nIter, ncol = p)
 
-      # initialize Gibbs chain
       for (v in 1:p) {
         if (type[v] == "g") sampling_seq[1, v] <- rnorm(1)
         if (type[v] == "p") sampling_seq[1, v] <- rpois(1, lambda = 0.5)
@@ -238,8 +235,12 @@ for (seednum in seeds) {
   }
 
   generate_mixed_data <- function(adj, nsample, seednum) {
-    # Generate mixed data with p/2 continuous (g) and p/2 binary (c) variables.
-    # The dependency structure is copied from 'adj'.
+    # This function generates mixed data with 
+    # p/2 continuous types and p/2 binary types.
+    #
+    # adj    : The dependency structure is copied from "adj".
+    # nsample: The number of samples to generate
+    # seednum: To specify seeds
 
     p <- nrow(adj)
 
@@ -249,6 +250,7 @@ for (seednum in seeds) {
     type <- rep(c("g", "c"), each = p / 2)
     level <- rep(c(1, 2), each = p / 2)
 
+    # 1. Specify Model
     # (a) Edge set
     factors <- list()
     factors[[1]] <- as.array(idx_pair)
@@ -276,7 +278,7 @@ for (seednum in seeds) {
       )
     }
 
-    # (c) Thresholds
+    # (c) Define Thresholds
     thresholds <- list()
     for (i in seq_along(type)) {
       switch(
@@ -286,10 +288,10 @@ for (seednum in seeds) {
       )
     }
 
-    # (d) Standard deviations for continuous
+    # (d) Define Variances
     sds <- rep(.1, length(type))
 
-    # Sample cases
+    # 2. Sample cases
     set.seed(seednum)
     data <- mgmsampler_user(factors = factors,
                             interactions = interactions,
@@ -332,8 +334,9 @@ for (seednum in seeds) {
   }
   check_column_types(completed_data)
 
-  # -- 2.2 Inject MCAR=10% missingness --
+  # 2-2) Inject MCAR missingness at 10% ---------
   set.seed(seednum * 100)
+      
   create_MCAR <- function(data, perc = 0.1) {
     data_na <- data
     total_cells <- nrow(data_na) * ncol(data_na)
@@ -349,7 +352,7 @@ for (seednum in seeds) {
   data_na <- create_MCAR(completed_data)
   head(data_na)
 
-  # -- 2.3 Initial imputation (mean for numeric, mode for factor) --
+  # 2-3) Initial mean imputation --------
   initial_imputation <- function(data) {
     data_imputed <- data
     for (col in 1:ncol(data_imputed)) {
@@ -366,8 +369,7 @@ for (seednum in seeds) {
   initial_imputed_data <- initial_imputation(data_na)
   head(initial_imputed_data)
 
-  # -- 2.4 MICE-by-mgm iterative imputation (proposed) --
-
+  # 2-4) MICE-by-mgm iterative imputation--------
   data <- initial_imputed_data  # working copy
 
   # Automatically determine mgm 'type' and 'level' from data frame
@@ -460,7 +462,7 @@ for (seednum in seeds) {
     assign(paste("pseudo_completed", data_set_number, sep = ""), data, envir = .GlobalEnv)
   }
 
-  # -- 2.5 Final adjacency matrices (binary) from completed datasets --
+  # 2-5) Final adjacency matrices ---------
 
   final_adj_matrix <- function(data_list) {
     adj_matrices <- list()
@@ -517,7 +519,7 @@ for (seednum in seeds) {
   Omega_bin <- ifelse(abs(Omega) > 0, 1, 0)
   diag(Omega_bin) <- 0
 
-  # -- 2.6 Evaluation vs. Omega: FPR/TPR points --
+  # 2-6) Evaluation of FPR/TPR across Omega values --------
 
   calculate_fpr_tpr_points <- function(predicted_adj, true_adj) {
     predicted <- as.vector(predicted_adj)
@@ -538,19 +540,19 @@ for (seednum in seeds) {
   all_fpr_tpr_data <- rbind(all_fpr_tpr_data, fpr_tpr_data)
 }
 
-# ---- 3) Final results ----
+# 3) Final results ---------------------------
 
-# 3.1 Print all FPR/TPR pairs
+# 3-1) Print all FPR/TPR pairs
 print(all_fpr_tpr_data)
 
-# 3.2 Model-wise means
+# 3-2) Model-wise means
 mean_fpr_tpr_data <- all_fpr_tpr_data %>%
   group_by(Model) %>%
   summarise(FPR = mean(FPR), TPR = mean(TPR)) %>%
   mutate(Seed = "Mean")
 print(mean_fpr_tpr_data)
 
-# 3.3 ROC scatter (requires ggplot2)
+# 3-3) ROC scatter (requires ggplot2)
 # If ggplot2 is not already attached in your R session, run: install.packages("ggplot2"); library(ggplot2)
 ggplot(all_fpr_tpr_data, aes(x = FPR, y = TPR, color = Model)) +
   geom_point(size = 3) +
